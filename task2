@@ -1,0 +1,89 @@
+import os
+import json
+from datetime import datetime
+
+def load_transactions():
+    transactions = []
+    if os.path.exists("transactions.json"):
+        with open("transactions.json", "r") as file:
+            transactions = json.load(file)
+    return transactions
+
+def save_transactions(transactions):
+    with open("transactions.json", "w") as file:
+        json.dump(transactions, file, indent=2)
+
+def display_budget(income, expenses):
+    remaining_budget = income - sum(expenses.values())
+    print("\n===== Budget Tracker =====")
+    print(f"Income: ${income}")
+    print("Expenses:")
+    for category, amount in expenses.items():
+        print(f"  {category}: ${amount}")
+    print("-" * 30)
+    print(f"Remaining Budget: ${remaining_budget}")
+
+def input_transaction(transactions):
+    transaction_type = input("Enter transaction type (income/expense): ").lower()
+
+    if transaction_type not in ["income", "expense"]:
+        print("Invalid transaction type. Please enter 'income' or 'expense'.")
+        return
+
+    category = input("Enter category: ")
+    amount = float(input("Enter amount: "))
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    new_transaction = {
+        "type": transaction_type,
+        "category": category,
+        "amount": amount,
+        "timestamp": timestamp
+    }
+
+    transactions.append(new_transaction)
+    save_transactions(transactions)
+    print("Transaction added successfully.")
+
+def analyze_spending(transactions):
+    expense_categories = {}
+    for transaction in transactions:
+        if transaction["type"] == "expense":
+            category = transaction["category"]
+            amount = transaction["amount"]
+            expense_categories[category] = expense_categories.get(category, 0) + amount
+
+    if not expense_categories:
+        print("No expense data available.")
+    else:
+        print("\n===== Spending Trends =====")
+        for category, amount in expense_categories.items():
+            print(f"{category}: ${amount}")
+
+def main():
+    transactions = load_transactions()
+
+    while True:
+        print("\n===== Budget Tracker Menu =====")
+        print("1. Display Budget")
+        print("2. Add Transaction")
+        print("3. Analyze Spending Trends")
+        print("4. Exit")
+
+        choice = input("Enter your choice (1-4): ")
+
+        if choice == "1":
+            income = float(input("Enter your total income: "))
+            display_budget(income, {t["category"]: t["amount"] for t in transactions if t["type"] == "expense"})
+        elif choice == "2":
+            input_transaction(transactions)
+        elif choice == "3":
+            analyze_spending(transactions)
+        elif choice == "4":
+            print("Exiting the Budget Tracker.")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
